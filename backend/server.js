@@ -26,27 +26,34 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-// Serve static files (uploads)
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+
+// Serve static files (uploads) - hanya untuk development
+// Di Vercel serverless, file system tidak persisten
+if (process.env.VERCEL !== '1') {
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
 }
-app.use('/uploads', express.static(uploadsDir));
 
 // Setup multer untuk upload file
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'biota-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Di Vercel serverless, gunakan memory storage (file tidak bisa disimpan di disk)
+const storage = process.env.VERCEL === '1' 
+  ? multer.memoryStorage() // Vercel serverless - gunakan memory
+  : multer.diskStorage({    // Development - gunakan disk
+      destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'biota-' + uniqueSuffix + path.extname(file.originalname));
+      }
+    });
 
 const upload = multer({ 
   storage: storage,
@@ -331,14 +338,24 @@ app.post('/api/biota', authenticateToken, upload.single('image'), async (req, re
     // Handle image upload
     let imageUrl = '';
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
-      console.log('✅ File uploaded:', imageUrl);
+      // Di Vercel serverless, file disimpan di memory, perlu upload ke cloud storage
+      if (process.env.VERCEL === '1') {
+        // TODO: Upload ke Supabase Storage atau Cloudinary
+        // Untuk sekarang, return error yang jelas
+        console.log('⚠️ Vercel serverless: File upload perlu disimpan ke cloud storage');
+        return res.status(501).json({ 
+          error: 'File upload belum didukung di Vercel serverless. Silakan gunakan URL gambar langsung atau deploy backend ke Render/Fly.io untuk support file upload.' 
+        });
+      } else {
+        imageUrl = `/uploads/${req.file.filename}`;
+        console.log('✅ File uploaded:', imageUrl);
+      }
     } else if (req.body.image) {
       imageUrl = req.body.image;
       console.log('✅ Using body image:', imageUrl);
     } else {
       console.log('❌ No image provided');
-      return res.status(400).json({ error: 'Foto biota harus diupload!' });
+      return res.status(400).json({ error: 'Foto biota harus diupload atau berikan URL gambar!' });
     }
 
     // Insert biota baru
@@ -431,7 +448,13 @@ app.put('/api/biota/:id', authenticateToken, upload.single('image'), async (req,
 
     // Handle image update
     if (req.file) {
-      // Hapus file lama jika ada
+      // Di Vercel serverless, file tidak bisa disimpan di disk
+      if (process.env.VERCEL === '1') {
+        return res.status(501).json({ 
+          error: 'File upload belum didukung di Vercel serverless. Gunakan URL gambar langsung.' 
+        });
+      }
+      // Hapus file lama jika ada (hanya untuk development)
       if (existingBiota.image && existingBiota.image.startsWith('/uploads/')) {
         const oldImagePath = path.join(__dirname, existingBiota.image);
         if (fs.existsSync(oldImagePath)) {
@@ -459,7 +482,7 @@ app.put('/api/biota/:id', authenticateToken, upload.single('image'), async (req,
     );
 
     // Get updated biota
-    const updatedBiota = await query('SELECT * FROM biota WHERE id = ?', [req.params.id]);
+    const updatedBiota = await query('SELECT * FROM biota WHERE id = $1', [req.params.id]);
 
     res.json({
       message: 'Biota berhasil diupdate!',
@@ -501,8 +524,8 @@ app.delete('/api/biota/:id', authenticateToken, async (req, res) => {
     
     console.log(`✅ Delete permission granted: isOwner=${isOwner}, isAdmin=${isAdmin}`);
 
-    // Hapus file gambar jika ada
-    if (existingBiota.image && existingBiota.image.startsWith('/uploads/')) {
+    // Hapus file gambar jika ada (hanya untuk development, tidak untuk Vercel serverless)
+    if (process.env.VERCEL !== '1' && existingBiota.image && existingBiota.image.startsWith('/uploads/')) {
       const imagePath = path.join(__dirname, existingBiota.image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
@@ -544,13 +567,24 @@ app.get('/', (req, res) => {
 
 // ==================== HEALTH CHECK ====================
 app.get('/api/health', async (req, res) => {
-  const dbConnected = await testConnection();
-  res.json({ 
-    status: dbConnected ? 'OK' : 'ERROR',
-    message: 'AquaBiodiversa API is running!',
-    database: dbConnected ? 'Connected' : 'Disconnected',
-    timestamp: new Date().toISOString()
-  });
+  try {
+    const dbConnected = await testConnection();
+    res.json({ 
+      status: dbConnected ? 'OK' : 'ERROR',
+      message: 'AquaBiodiversa API is running!',
+      database: dbConnected ? 'Connected' : 'Disconnected',
+      timestamp: new Date().toISOString(),
+      environment: process.env.VERCEL === '1' ? 'Vercel Serverless' : 'Local'
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 
