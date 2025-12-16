@@ -23,7 +23,13 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Log untuk debugging
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  console.log('🌐 API Request:', fullUrl);
+  console.log('🔑 API Base URL:', API_BASE_URL);
+  console.log('📍 Endpoint:', endpoint);
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
   });
