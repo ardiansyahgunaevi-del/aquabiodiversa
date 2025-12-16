@@ -9,76 +9,55 @@ Panduan step-by-step untuk deploy aplikasi AquaBiodiversa ke hosting gratis.
 
 ---
 
-## 🚂 Step 1: Deploy Backend ke Railway
+## 🚂 Step 1: Deploy Backend (Pilih Salah Satu)
 
-### 1.1 Daftar di Railway
+### ⚠️ Catatan Penting
 
-1. Buka [railway.app](https://railway.app)
-2. Klik **"Start a New Project"**
-3. Login dengan GitHub
+- **Vercel**: Bisa deploy backend dengan serverless functions (Recommended) ⭐
+- **Railway**: Free tier terbatas (hanya bisa deploy database)
+- **Cyclic**: Sudah shutdown (tidak tersedia lagi)
+- **Render**: Perlu kartu kredit untuk verifikasi (TIDAK akan di-charge untuk free tier)
+- **Fly.io**: Tidak perlu kartu kredit, tapi perlu install CLI
 
-### 1.2 Deploy dari GitHub
-
-1. Setelah login, klik **"New Project"**
-2. Pilih **"Deploy from GitHub repo"**
-3. Pilih repository `aquabiodiversa` Anda
-4. Klik **"Deploy Now"**
-
-### 1.3 Konfigurasi Backend (Jika Belum di Step 1.2)
-
-Jika sudah set di Step 1.2, skip langkah ini. Jika belum:
-
-1. Klik service yang baru dibuat
-2. Klik tab **"Settings"**
-3. Scroll ke bagian **"Deploy"**
-4. Isi konfigurasi:
-   - **Root Directory**: `backend` ⭐
-   - **Start Command**: `npm start` ⭐
-5. Klik **"Save"**
-
-**Atau gunakan file `railway.toml` yang sudah ada:**
-- File `railway.toml` sudah ada di root folder
-- Railway akan otomatis menggunakan konfigurasi ini
-- **PENTING:** Commit dan push file ini SEBELUM deploy:
-  ```bash
-  git add railway.toml
-  git commit -m "Add Railway config"
-  git push
-  ```
-- Setelah push, Railway akan auto-detect konfigurasi dari `railway.toml`
+**Rekomendasi: Gunakan Vercel** - bisa deploy frontend dan backend di satu platform, tidak perlu kartu kredit, unlimited!
 
 ---
 
-## 🌐 Opsi B: Deploy Backend ke Cyclic.sh (TIDAK Perlu Kartu Kredit) ⭐
+## ⚡ Opsi A: Deploy Backend ke Vercel (Recommended) ⭐
 
-**Cyclic.sh adalah alternatif terbaik - benar-benar TIDAK perlu kartu kredit!**
+**Vercel bisa deploy Express.js backend dengan serverless functions!**
 
-### 1.1 Daftar di Cyclic
+### 1.1 Daftar di Vercel
 
-1. Buka [cyclic.sh](https://www.cyclic.sh)
-2. Klik **"Sign Up"** (gratis)
+1. Buka [vercel.com](https://vercel.com)
+2. Klik **"Sign Up"**
 3. Login dengan GitHub
 4. **TIDAK perlu kartu kredit!** ✅
 
-### 1.2 Deploy dari GitHub
+### 1.2 Import Project untuk Backend
 
-1. Setelah login, klik **"Deploy Now"**
-2. Pilih **"GitHub"**
-3. Pilih repository `aquabiodiversa` Anda
-4. Klik **"Deploy"**
+1. Setelah login, klik **"Add New..."** > **"Project"**
+2. Pilih repository `aquabiodiversa` Anda
+3. Klik **"Import"**
 
 ### 1.3 Konfigurasi Backend
 
-1. **Root Directory**: `backend`
-2. Cyclic akan otomatis detect Node.js
-3. Pastikan:
-   - **Start Command**: `npm start` (otomatis terdeteksi)
-   - **Build Command**: `npm install` (otomatis terdeteksi)
+**PENTING:** Untuk deploy backend, kita perlu setup khusus:
+
+1. **Framework Preset**: Pilih **"Other"** atau **"Node.js"**
+2. **Root Directory**: `backend` ⭐ (PENTING!)
+3. **Build Command**: `npm install` (atau biarkan kosong)
+4. **Output Directory**: (biarkan kosong untuk backend)
+5. **Install Command**: `npm install`
+
+**Atau gunakan file `backend/vercel.json` yang sudah dibuat:**
+- File `backend/vercel.json` sudah ada
+- Vercel akan otomatis menggunakan konfigurasi ini
 
 ### 1.4 Setup Environment Variables
 
-1. Setelah deploy dimulai, klik **"Environment"** tab
-2. Klik **"Add Variable"** untuk setiap variabel berikut:
+1. Scroll ke bagian **"Environment Variables"**
+2. Klik **"Add"** untuk setiap variabel berikut:
 
    **a. DATABASE_URL** ⭐ (PENTING!)
    - Key: `DATABASE_URL`
@@ -92,7 +71,7 @@ Jika sudah set di Step 1.2, skip langkah ini. Jika belum:
         - Method: **Session pooler**
      4. Copy connection string
      5. **Ganti `[YOUR-PASSWORD]`** dengan password project Supabase Anda
-     6. Paste ke Cyclic
+     6. Paste ke Vercel
    - Contoh: `postgresql://postgres.xxxxx:password123@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
 
    **b. JWT_SECRET**
@@ -112,28 +91,174 @@ Jika sudah set di Step 1.2, skip langkah ini. Jika belum:
    - Key: `NODE_ENV`
    - Value: `production`
 
-   **d. PORT** (Opsional)
-   - Key: `PORT`
-   - Value: `3001`
-
 3. Setelah semua variabel ditambahkan, pastikan semua sudah tersimpan
 
 ### 1.5 Deploy
 
-1. Cyclic akan otomatis deploy setelah environment variables di-setup
-2. Tunggu 2-3 menit hingga deploy selesai
-3. Setelah selesai, Anda akan mendapat URL seperti: `https://aquabiodiversa-backend.cyclic.app`
-4. **Simpan URL ini!** Akan digunakan untuk frontend
-
-**Catatan:** Cyclic menggunakan serverless, jadi pertama kali diakses mungkin perlu beberapa detik untuk "wake up".
+1. Scroll ke bawah
+2. Klik **"Deploy"**
+3. Vercel akan build dan deploy (tunggu 3-5 menit)
+4. Setelah selesai, Anda akan mendapat URL seperti: `https://aquabiodiversa-backend.vercel.app`
+5. **Simpan URL ini!** Akan digunakan untuk frontend
 
 ### 1.6 Test Backend
 
 1. Buka URL backend di browser
 2. Tambahkan `/api/health` di akhir URL
-   - Contoh: `https://aquabiodiversa-backend.cyclic.app/api/health`
+   - Contoh: `https://aquabiodiversa-backend.vercel.app/api/health`
 3. Seharusnya muncul JSON dengan status "OK"
-4. Jika pertama kali lambat, tunggu beberapa detik (serverless wake up)
+4. Jika error, cek logs di Vercel dashboard
+
+**Catatan:** Vercel menggunakan serverless functions, jadi pertama kali diakses mungkin perlu beberapa detik untuk "cold start" (normal).
+
+---
+
+## 🎯 Opsi B: Deploy Backend ke Render ⭐
+
+**Render adalah pilihan terbaik yang masih aktif dan stabil!**
+
+### 1.1 Daftar di Render
+
+1. Buka [render.com](https://render.com)
+2. Klik **"Get Started for Free"**
+3. Login dengan GitHub
+
+**⚠️ PENTING: Tentang Kartu Kredit**
+- Render akan meminta kartu kredit saat daftar
+- **TIDAK akan di-charge** selama masih dalam free tier (750 jam/bulan)
+- Hanya untuk verifikasi identitas
+- Bisa cancel kapan saja tanpa charge
+
+### 1.2 Buat Web Service
+
+1. Setelah login, klik **"New +"** di kanan atas
+2. Pilih **"Web Service"**
+3. Klik **"Connect account"** untuk GitHub (jika belum)
+4. Pilih repository `aquabiodiversa` Anda
+5. Klik **"Connect"**
+
+### 1.3 Konfigurasi Backend
+
+Isi form dengan:
+
+- **Name**: `aquabiodiversa-backend`
+- **Environment**: `Node`
+- **Region**: Pilih yang terdekat (Singapore recommended)
+- **Branch**: `main`
+- **Root Directory**: `backend` ⭐ (PENTING!)
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Plan**: **Free** (pilih yang gratis)
+
+### 1.4 Setup Environment Variables
+
+Scroll ke bagian **"Environment Variables"**, klik **"Add Environment Variable"** dan tambahkan:
+
+   **a. DATABASE_URL** ⭐ (PENTING!)
+   - Key: `DATABASE_URL`
+   - Value: Connection string dari Supabase
+   - Cara ambil:
+     1. Buka Supabase Dashboard
+     2. Cari **"Connect to your project"** atau **Settings > Database**
+     3. Pilih:
+        - Type: **URI**
+        - Source: **Primary Database**
+        - Method: **Session pooler**
+     4. Copy connection string
+     5. **Ganti `[YOUR-PASSWORD]`** dengan password project Supabase Anda
+     6. Paste ke Render
+   - Contoh: `postgresql://postgres.xxxxx:password123@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
+
+   **b. JWT_SECRET**
+   - Key: `JWT_SECRET`
+   - Value: Generate secret key
+   - Cara generate:
+     ```bash
+     # Windows PowerShell
+     [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+     
+     # Mac/Linux
+     openssl rand -base64 32
+     ```
+     Atau gunakan: [randomkeygen.com](https://randomkeygen.com)
+
+   **c. NODE_ENV**
+   - Key: `NODE_ENV`
+   - Value: `production`
+
+   **d. PORT**
+   - Key: `PORT`
+   - Value: `10000` (Render menggunakan port ini untuk free tier)
+
+   **e. NODE_ENV**
+   - Key: `NODE_ENV`
+   - Value: `production`
+
+3. Setelah semua variabel ditambahkan, pastikan semua sudah tersimpan
+
+### 1.5 Deploy
+
+1. Scroll ke bawah
+2. Klik **"Create Web Service"**
+3. Render akan mulai build dan deploy (tunggu 5-10 menit)
+4. Setelah selesai, Anda akan mendapat URL seperti: `https://aquabiodiversa-backend.onrender.com`
+5. **Simpan URL ini!** Akan digunakan untuk frontend
+
+### 1.6 Test Backend
+
+1. Buka URL backend di browser
+2. Tambahkan `/api/health` di akhir URL
+   - Contoh: `https://aquabiodiversa-backend.onrender.com/api/health`
+3. Seharusnya muncul JSON dengan status "OK"
+4. Jika error, cek logs di dashboard Render
+
+---
+
+## 🪂 Opsi B: Deploy Backend ke Fly.io (TIDAK Perlu Kartu Kredit)
+
+Jika tidak mau pakai kartu kredit, gunakan Fly.io:
+
+### 1.1 Install Fly CLI
+
+```bash
+# Windows (PowerShell)
+iwr https://fly.io/install.ps1 -useb | iex
+
+# Mac/Linux
+curl -L https://fly.io/install.sh | sh
+```
+
+### 1.2 Login
+
+```bash
+fly auth login
+```
+
+### 1.3 Setup di Folder Backend
+
+```bash
+cd backend
+fly launch
+```
+
+- Pilih region terdekat
+- Jangan deploy database (kita pakai Supabase)
+
+### 1.4 Setup Environment Variables
+
+```bash
+fly secrets set DATABASE_URL="postgresql://..."
+fly secrets set JWT_SECRET="your-secret-key"
+fly secrets set NODE_ENV="production"
+```
+
+### 1.5 Deploy
+
+```bash
+fly deploy
+```
+
+**✅ Selesai!** Backend sudah online!
 
 ---
 
@@ -407,11 +532,11 @@ Netlify akan auto-detect, tapi pastikan:
 - [x] Schema di-import (tabel `users` dan `biota` ada)
 - [x] Connection string sudah didapat
 
-### Backend (Railway/Cyclic)
-- [ ] Backend di-deploy ke Railway atau Cyclic
+### Backend (Render/Fly.io)
+- [ ] Backend di-deploy ke Render atau Fly.io
 - [ ] Konfigurasi sudah benar:
-  - Railway: Root Directory `backend`, Start Command `npm start`
-  - Cyclic: Root Directory `backend`, Start Command `npm start` (otomatis)
+  - Render: Root Directory `backend`, Build Command `npm install`, Start Command `npm start`
+  - Fly.io: Setup via CLI
 - [ ] Environment variables sudah di-setup:
   - [ ] `DATABASE_URL`
   - [ ] `JWT_SECRET`
@@ -436,7 +561,7 @@ Netlify akan auto-detect, tapi pastikan:
 Aplikasi Anda sekarang sudah online dan bisa diakses dari mana saja!
 
 **URL Frontend**: `https://your-app.vercel.app` (Vercel) atau `https://your-app.netlify.app` (Netlify)  
-**URL Backend**: `https://your-backend.up.railway.app` (Railway) atau `https://your-backend.cyclic.app` (Cyclic)
+**URL Backend**: `https://your-backend.onrender.com` (Render) atau `https://your-backend.fly.dev` (Fly.io)
 
 ---
 

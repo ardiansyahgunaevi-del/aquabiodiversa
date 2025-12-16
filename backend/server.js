@@ -554,26 +554,31 @@ app.get('/api/health', async (req, res) => {
 });
 
 
-// Start server
-const startServer = async () => {
-  // Test koneksi database dulu
-  const dbConnected = await testConnection();
-  
-  if (!dbConnected) {
-    console.log('\n⚠️  Server tetap akan berjalan, tapi pastikan MySQL sudah dikonfigurasi dengan benar!');
-  }
+// Export untuk Vercel serverless
+export default app;
 
-  // Listen on 0.0.0.0 agar bisa diakses dari PC lain di network yang sama
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server berjalan di http://localhost:${PORT}`);
-    console.log(`🌐 Server bisa diakses dari PC lain di network yang sama`);
-    console.log(`📡 API Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`🔐 Auth endpoints: /api/auth/login, /api/auth/register`);
-    console.log(`🐠 Biota endpoints: /api/biota`);
-    console.log(`\n💡 Untuk akses dari PC lain, gunakan IP komputer ini:`);
-    console.log(`   Contoh: http://192.168.1.XXX:${PORT}\n`);
-  });
-};
+// Start server hanya jika tidak di Vercel
+if (process.env.VERCEL !== '1') {
+  const startServer = async () => {
+    // Test koneksi database dulu
+    const dbConnected = await testConnection();
+    
+    if (!dbConnected) {
+      console.log('\n⚠️  Server tetap akan berjalan, tapi pastikan PostgreSQL sudah dikonfigurasi dengan benar!');
+    }
 
-startServer();
+    // Listen on 0.0.0.0 agar bisa diakses dari PC lain di network yang sama
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`\n🚀 Server berjalan di http://localhost:${PORT}`);
+      console.log(`🌐 Server bisa diakses dari PC lain di network yang sama`);
+      console.log(`📡 API Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`🔐 Auth endpoints: /api/auth/login, /api/auth/register`);
+      console.log(`🐠 Biota endpoints: /api/biota`);
+      console.log(`\n💡 Untuk akses dari PC lain, gunakan IP komputer ini:`);
+      console.log(`   Contoh: http://192.168.1.XXX:${PORT}\n`);
+    });
+  };
+
+  startServer();
+}
 
