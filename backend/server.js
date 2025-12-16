@@ -27,6 +27,23 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Middleware untuk logging request (untuk debugging)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err);
+  console.error('Error stack:', err.stack);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
 // Serve static files (uploads) - hanya untuk development
 // Di Vercel serverless, file system tidak persisten
 if (process.env.VERCEL !== '1') {
@@ -201,8 +218,16 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Terjadi kesalahan saat login.' });
+    console.error('❌ Login error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ 
+      error: 'Terjadi kesalahan saat login.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -386,8 +411,16 @@ app.post('/api/biota', authenticateToken, upload.single('image'), async (req, re
     });
   } catch (error) {
     console.error('❌ Create biota error:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ error: 'Terjadi kesalahan saat menambahkan biota: ' + error.message });
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail
+    });
+    res.status(500).json({ 
+      error: 'Terjadi kesalahan saat menambahkan biota.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -587,6 +620,12 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+
+// 404 handler
+app.use((req, res) => {
+  console.log(`❌ Route not found: ${req.method} ${req.path}`);
+  res.status(404).json({ error: 'Route tidak ditemukan' });
+});
 
 // Export untuk Vercel serverless
 export default app;

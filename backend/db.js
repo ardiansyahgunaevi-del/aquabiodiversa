@@ -64,7 +64,16 @@ export const query = async (sql, params = []) => {
     const result = await pool.query(pgSql, params);
     return result.rows;
   } catch (error) {
-    console.error('Database query error:', error);
+    console.error('❌ Database query error:');
+    console.error('SQL:', sql);
+    console.error('Params:', params);
+    console.error('Error:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint,
+      position: error.position
+    });
     throw error;
   }
 };
