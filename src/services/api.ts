@@ -1,5 +1,17 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Pastikan URL memiliki protocol (https:// atau http://)
+let apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+// Fix: Tambahkan https:// jika tidak ada protocol
+if (apiBaseUrl && !apiBaseUrl.startsWith('http://') && !apiBaseUrl.startsWith('https://')) {
+  console.warn('⚠️ VITE_API_URL tidak memiliki protocol, menambahkan https://');
+  apiBaseUrl = `https://${apiBaseUrl}`;
+}
+
+// Hapus trailing slash jika ada
+apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
+
+const API_BASE_URL = apiBaseUrl;
 
 // Helper untuk mendapatkan token dari localStorage
 const getToken = (): string | null => {
