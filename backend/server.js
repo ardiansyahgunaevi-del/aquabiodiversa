@@ -35,16 +35,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ Unhandled error:', err);
-  console.error('Error stack:', err.stack);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: err.message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
+// Global error handler untuk middleware - HARUS sebelum routes
+// Catatan: Error handler ini hanya menangkap error dari middleware sebelumnya
 
 // Serve static files (uploads) - hanya untuk development
 // Di Vercel serverless, file system tidak persisten
