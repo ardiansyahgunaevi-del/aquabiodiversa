@@ -30,6 +30,8 @@ app.use(express.json());
 // Middleware untuk logging request (untuk debugging)
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log(`Query:`, req.query);
+  console.log(`Body:`, req.body);
   next();
 });
 
@@ -621,10 +623,43 @@ app.get('/api/health', async (req, res) => {
 });
 
 
-// 404 handler
+// 404 handler - HARUS di akhir, setelah semua route
 app.use((req, res) => {
   console.log(`❌ Route not found: ${req.method} ${req.path}`);
-  res.status(404).json({ error: 'Route tidak ditemukan' });
+  console.log(`Available routes:`);
+  console.log(`  GET  /`);
+  console.log(`  GET  /api/health`);
+  console.log(`  POST /api/auth/register`);
+  console.log(`  POST /api/auth/login`);
+  console.log(`  GET  /api/auth/me`);
+  console.log(`  GET  /api/auth/users`);
+  console.log(`  GET  /api/biota`);
+  console.log(`  GET  /api/biota/:id`);
+  console.log(`  POST /api/biota`);
+  console.log(`  PUT  /api/biota/:id`);
+  console.log(`  DELETE /api/biota/:id`);
+  
+  res.status(404).json({ 
+    error: 'Route tidak ditemukan',
+    method: req.method,
+    path: req.path,
+    availableRoutes: {
+      health: 'GET /api/health',
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        me: 'GET /api/auth/me',
+        users: 'GET /api/auth/users'
+      },
+      biota: {
+        getAll: 'GET /api/biota',
+        getById: 'GET /api/biota/:id',
+        create: 'POST /api/biota',
+        update: 'PUT /api/biota/:id',
+        delete: 'DELETE /api/biota/:id'
+      }
+    }
+  });
 });
 
 // Export untuk Vercel serverless
