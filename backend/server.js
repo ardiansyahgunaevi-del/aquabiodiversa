@@ -578,26 +578,35 @@ app.delete('/api/biota/:id', authenticateToken, async (req, res) => {
 
 // ==================== ROOT PATH ====================
 app.get('/', (req, res) => {
-  res.json({
-    message: '🌊 AquaBiodiversa API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      auth: {
-        register: 'POST /api/auth/register',
-        login: 'POST /api/auth/login',
-        me: 'GET /api/auth/me'
+  try {
+    console.log('✅ Root path accessed');
+    res.json({
+      message: '🌊 AquaBiodiversa API',
+      version: '1.0.0',
+      endpoints: {
+        health: '/api/health',
+        auth: {
+          register: 'POST /api/auth/register',
+          login: 'POST /api/auth/login',
+          me: 'GET /api/auth/me'
+        },
+        biota: {
+          getAll: 'GET /api/biota',
+          getById: 'GET /api/biota/:id',
+          create: 'POST /api/biota',
+          update: 'PUT /api/biota/:id',
+          delete: 'DELETE /api/biota/:id'
+        }
       },
-      biota: {
-        getAll: 'GET /api/biota',
-        getById: 'GET /api/biota/:id',
-        create: 'POST /api/biota',
-        update: 'PUT /api/biota/:id',
-        delete: 'DELETE /api/biota/:id'
-      }
-    },
-    documentation: 'Lihat README.md untuk dokumentasi lengkap'
-  });
+      documentation: 'Lihat README.md untuk dokumentasi lengkap'
+    });
+  } catch (error) {
+    console.error('❌ Root path error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
 });
 
 // ==================== HEALTH CHECK ====================
@@ -623,7 +632,21 @@ app.get('/api/health', async (req, res) => {
 });
 
 
-// 404 handler - HARUS di akhir, setelah semua route
+// Global error handler untuk routes - HARUS di akhir, setelah semua route
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error in route:', err);
+  console.error('Error stack:', err.stack);
+  console.error('Request:', req.method, req.path);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message,
+    path: req.path,
+    method: req.method,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+// 404 handler - HARUS di akhir, setelah semua route dan error handler
 app.use((req, res) => {
   console.log(`❌ Route not found: ${req.method} ${req.path}`);
   console.log(`Available routes:`);
